@@ -3,10 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	server "github.com/cloudflare/fgbgp/server"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"os"
+
+	server "github.com/benjojo/fgbgp/server"
+	log "github.com/sirupsen/logrus"
 )
 
 const AppVersion = "fgbgp 2017.8.0"

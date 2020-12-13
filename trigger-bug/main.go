@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/benjojo/fgbgp/messages"
@@ -25,6 +26,12 @@ func (col *Collector) Notification(msg *messages.BGPMessageNotification, n *fgbg
 	return true
 }
 
+var (
+	RouteSendCount        = flag.Int("flood.routes", 99, "How many routes to send on the flood")
+	TrickleRouteSendCount = flag.Int("trickle.routes", 1, "How many routes to send per -trickle.wait")
+	TrickleWait           = flag.Duration("trickle.wait", time.Second*10, "How long to wait to send -trickle.routes many routes")
+)
+
 // ProcessReceived a
 func (col *Collector) ProcessReceived(v interface{}, n *fgbgp.Neighbor) (bool, error) {
 	log.Print("ProcessReceived")
@@ -38,7 +45,7 @@ func (col *Collector) ProcessReceived(v interface{}, n *fgbgp.Neighbor) (bool, e
 
 		log.Print("Sending update flood")
 
-		for i := uint64(0); i < 99; i++ {
+		for i := uint64(0); i < uint64(*RouteSendCount); i++ {
 
 			afi := messages.AfiSafi{
 				Afi:  1,
@@ -130,11 +137,50 @@ func (col *Collector) ProcessReceived(v interface{}, n *fgbgp.Neighbor) (bool, e
 		n.OutQueue <- ka
 		n.StopRecv = true
 		globalsend <- v
-
+		go trickleRoutes(n)
 	default:
 		break
 	}
 	return true, nil
+}
+
+func trickleRoutes(n *fgbgp.Neighbor) {
+	i := uint64(*RouteSendCount) + 1
+	for {
+		time.Sleep(*TrickleWait)
+		if n.Connected {
+			for j := 0; j < *TrickleRouteSendCount; j++ {
+				afi := messages.AfiSafi{
+					Afi:  1,
+					Safi: 1,
+				}
+
+				blahByte := make([]byte, 8)
+				binary.PutUvarint(blahByte, i)
+
+				rpfx := make([]byte, 3)
+				rand.Read(rpfx)
+				_, a, _ := net.ParseCIDR(fmt.Sprintf("%d.%d.%d.0/24", blahByte[2]+1, blahByte[1], blahByte[0]))
+				pfx := messages.NLRI_IPPrefix{
+					Prefix: *a,
+					PathId: 1,
+				}
+				n.SendRoute(
+					afi,
+					[]messages.NLRI{pfx},
+					nil,
+					net.IP{192, 168, 2, 50},
+					[]uint32{},
+					[]uint32{65001},
+					1,
+					1)
+
+				i++
+			}
+		} else {
+			return
+		}
+	}
 }
 
 // func setReadBuffer(fd *netFD, bytes int) error {

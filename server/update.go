@@ -3,9 +3,10 @@ package fgbgp
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudflare/fgbgp/messages"
-	log "github.com/sirupsen/logrus"
 	"sync/atomic"
+
+	"github.com/benjojo/fgbgp/messages"
+	log "github.com/sirupsen/logrus"
 )
 
 type BGPUpdateHandler interface {
@@ -34,7 +35,7 @@ type DefaultMessageUpdate struct {
 }
 
 func (n *Neighbor) UpdateRib(m *messages.BGPMessageUpdate) {
-	n.Rib.UpdateRib(m)
+	// n.Rib.UpdateRib(m)
 }
 
 func (uh *DefaultBGPUpdateHandler) ProcessUpdate(msg []byte, n *Neighbor) {
