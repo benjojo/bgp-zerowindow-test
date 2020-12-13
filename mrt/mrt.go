@@ -5,10 +5,11 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"github.com/cloudflare/fgbgp/messages"
 	"io"
 	"net"
 	"time"
+
+	"github.com/benjojo/fgbgp/messages"
 )
 
 const (

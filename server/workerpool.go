@@ -1,7 +1,7 @@
 package fgbgp
 
 import (
-	log "github.com/sirupsen/logrus"
+	"log"
 )
 
 type Handler interface {
@@ -65,12 +65,12 @@ func (w *Worker) Start() {
 			if w.Handler != nil {
 				err := w.Handler.Process(w.Id, msg)
 				if err != nil {
-					log.Error(err)
+					log.Printf("Error %v", err)
 					w.Handler.Error(w.Id, msg, err)
 				}
 			}
 		case <-w.q:
-			log.Infof("Stopping worker %v", w.Id)
+			log.Printf("Info: Stopping worker %v", w.Id)
 			break
 			break
 		}
@@ -78,7 +78,7 @@ func (w *Worker) Start() {
 }
 
 func (w *Worker) Stop() {
-	log.Infof("Stopping worker %v", w.Id)
+	log.Printf("Info: Stopping worker %v", w.Id)
 	w.q <- true
 }
 
